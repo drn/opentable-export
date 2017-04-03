@@ -30,8 +30,14 @@ module OpenTable
     def request(method, path, params={})
       path = "/api/#{path}"
 
-      response = connection.send(method, path, params) do |request|
-        request.url(path, params)
+      begin
+        response = connection.send(method, path, params) do |request|
+          request.url(path, params)
+        end
+      rescue Faraday::ParsingError
+        puts 'Timeout notice received...'
+        sleep 60*5 # 5 minutes
+        return request(method, path, params)
       end
 
       if [404, 403, 400].include?(response.status)
