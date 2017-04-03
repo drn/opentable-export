@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+require_relative 'lib/client'
+require 'yaml'
+require 'csv'
+require 'tty'
+require 'pry'
+require 'active_support'
+
+HEADERS = [
+  'id',
+  'name',
+  'address',
+  'city',
+  'state',
+  'area',
+  'postal_code',
+  'country',
+  'phone',
+  'lat',
+  'lng',
+  'price',
+  'reserve_url',
+  'mobile_reserve_url',
+  'image_url'
+].freeze
+
+city = ARGV[0]
+country = 'US'
+
+client = OpenTable::Client.new
+
+if city.nil?
+  prompt = TTY::Prompt.new
+  country = prompt.select('Select a country:', client.countries['countries'])
+  cities = client.cities(country: country)['cities']
+  city = prompt.select('Select a city:', cities)
+end
+
+puts "Downloading all restaurants in #{city}, #{country}..."
+
+page = 1
+info = nil
+
+filename = "OpenTable Resturants in #{city}, #{country}.csv"
+CSV.open(filename, "wb") do |csv|
+  csv << HEADERS
+  while info.nil? || info['restaurants'].any?
+    info = client.restaurants(city: city, per_page: 100, page: page)
+    info['restaurants'].each do |restaurant|
+      puts restaurant['name']
+      csv << restaurant.slice(*HEADERS).values
+    end
+    page += 1
+  end
+end
+
+system("open \"#{filename}\"")
