@@ -28,11 +28,11 @@ module OpenTable
   private
 
     def request(method, path, params={})
-      path = "/api/#{path}"
+      endpoint = "/api/#{path}"
 
       begin
-        response = connection.send(method, path, params) do |request|
-          request.url(path, params)
+        response = connection.send(method, endpoint, params) do |request|
+          request.url(endpoint, params)
         end
       rescue Faraday::ParsingError
         puts 'Timeout notice received...'
